@@ -1,0 +1,249 @@
+# ~/.bashrc: executed by bash(1) for non-login shells.
+# see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
+# for examples
+
+# If not running interactively, don't do anything
+case $- in
+    *i*) ;;
+      *) return;;
+esac
+
+# don't put duplicate lines or lines starting with space in the history.
+# See bash(1) for more options
+HISTCONTROL=ignoreboth
+
+# append to the history file, don't overwrite it
+shopt -s histappend
+
+# for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
+HISTSIZE=1000
+HISTFILESIZE=2000
+
+# check the window size after each command and, if necessary,
+# update the values of LINES and COLUMNS.
+shopt -s checkwinsize
+
+# If set, the pattern "**" used in a pathname expansion context will
+# match all files and zero or more directories and subdirectories.
+#shopt -s globstar
+
+# make less more friendly for non-text input files, see lesspipe(1)
+[ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
+
+# set variable identifying the chroot you work in (used in the prompt below)
+if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
+    debian_chroot=$(cat /etc/debian_chroot)
+fi
+
+# set a fancy prompt (non-color, unless we know we "want" color)
+case "$TERM" in
+    xterm-color|*-256color) color_prompt=yes;;
+esac
+
+# uncomment for a colored prompt, if the terminal has the capability; turned
+# off by default to not distract the user: the focus in a terminal window
+# should be on the output of commands, not on the prompt
+#force_color_prompt=yes
+
+if [ -n "$force_color_prompt" ]; then
+    if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
+	# We have color support; assume it's compliant with Ecma-48
+	# (ISO/IEC-6429). (Lack of such support is extremely rare, and such
+	# a case would tend to support setf rather than setaf.)
+	color_prompt=yes
+    else
+	color_prompt=
+    fi
+fi
+
+if [ "$color_prompt" = yes ]; then
+    PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
+else
+    PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
+fi
+unset color_prompt force_color_prompt
+
+# If this is an xterm set the title to user@host:dir
+case "$TERM" in
+xterm*|rxvt*)
+    PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1"
+    ;;
+*)
+    ;;
+esac
+
+# enable color support of ls and also add handy aliases
+if [ -x /usr/bin/dircolors ]; then
+    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+    alias ls='ls --color=auto'
+    #alias dir='dir --color=auto'
+    #alias vdir='vdir --color=auto'
+
+    alias grep='grep --color=auto'
+    alias fgrep='fgrep --color=auto'
+    alias egrep='egrep --color=auto'
+fi
+
+# colored GCC warnings and errors
+#export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
+
+# some more ls aliases
+alias ll='ls -alF'
+alias la='ls -A'
+alias l='ls -CF'
+
+# Add an "alert" alias for long running commands.  Use like so:
+#   sleep 10; alert
+alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
+
+# Alias definitions.
+# You may want to put all your additions into a separate file like
+# ~/.bash_aliases, instead of adding them here directly.
+# See /usr/share/doc/bash-doc/examples in the bash-doc package.
+
+if [ -f ~/.bash_aliases ]; then
+    . ~/.bash_aliases
+fi
+
+# enable programmable completion features (you don't need to enable
+# this, if it's already enabled in /etc/bash.bashrc and /etc/profile
+# sources /etc/bash.bashrc).
+if ! shopt -oq posix; then
+  if [ -f /usr/share/bash-completion/bash_completion ]; then
+    . /usr/share/bash-completion/bash_completion
+  elif [ -f /etc/bash_completion ]; then
+    . /etc/bash_completion
+  fi
+fi
+
+
+#!/bin/bash
+# remove warning
+export BASH_SILENCE_DEPRECATION_WARNING=1
+
+# export sublime text to bin in macOS
+# ln -s "/Applications/Sublime Text.app/Contents/SharedSupport/bin/subl" /usr/local/bin/subl
+
+# Create Alias With args
+# alias blah='function _blah(){ <comand $1 $2 $...> };_blah' $<> represents the args
+# alias *='function *(){*};*'
+# db-staging: $1=staging name, $2=db name
+alias db-staging='function _db_staging(){ echo "mysql -u root $2" | ssh -o StrictHostKeyChecking=no  -tt ubuntu@staging-$1.practodev.com; };_db_staging'
+# pod-staging: $1=staging name, $2=service name
+alias pod-staging='function _pod_staging(){ python ~/work/staging_login_bin_bash.py $1 $2; };_pod_staging'
+# vm-staging: $1=staging name
+alias vm-staging='function _vm_staging(){ python ~/work/staging_login_bin_bash.py $1; };_vm_staging'
+# logs: $1=staging name, $2=pod name
+alias logs='function _logs(){ kubectl logs -f $2 -n $1; };_logs'
+# pods: $1=staging name, $2=service name
+alias pods='function _pods(){ kubectl get pods -n $1 | grep $2; };_pods'
+# pods-all: $1=staging name
+alias pods-all='function _pods_all(){ kubectl get pods -n $1;};_pods_all'
+# update-staging: $1=staging name, $2=service name, $3=git branch name
+alias update-staging='function _update_staging(){ practl update st $1 -p $2:$3; };_update_staging'
+# deletepod: $1=staging name, $2=service name
+alias deletepod='function _deletepod(){ kubectl delete pod $2 -n $1; };_deletepod'
+
+
+alias podenter='function _podenter(){ kubectl exec -it $2 -n $1 /bin/bash; }; _podenter'
+
+# scp ubuntu@stgint-stgint.practodev.com:/home/ubuntu/rx_integration_service.sql /users/khushhal/Desktop/sql/ # remote to local
+# scp /users/khushhal/Desktop/sql/rx_integration_service_backup.sql  ubuntu@staging-stgint.practodev.com:/home/ubuntu ->local  # local to remote
+# scp-local-to-remote: $1=staging name, $2=local file, $3=remote dir
+alias scp-local-to-remote='function _scp_local_to_remote(){ scp $2 ubuntu@staging-$1.practodev.com:$3; };_scp_local_to_remote'
+alias dose-env='source ~/work/envs/dose_util_env/bin/activate'
+alias scc='function _scc(){ echo $1 | perl -pe "s/_(.)/\u\1/g"; };_scc'
+alias spp='function _spp(){ echo $1 |  perl -pe "s/_(.)/\u\1/g; s/^(.)/\u\1/g"; };_spp'
+alias_help() {
+    echo "edit-rolebinding: \$1=staging name";
+    echo "db-staging: $1=staging name, $2=db name";
+    echo "pod-staging: \$1=staging name, \$2=service name";
+    echo "vm-staging: \$1=staging name";
+    echo "logs: \$1=staging name, \$2=pod name";
+    echo "pods: \$1=staging name, \$2=service name";
+    echo "pods-all: \$1=staging name";
+    echo "update-staging: \$1=staging name, \$2=service name, \$3=git branch name";
+    echo "prod-env: no args needed";
+    echo "dose-check-chins2: no args needed";
+    echo "subscription-chins2-db:  no args needed";
+        echo "dose-env": no args needed
+    echo "#scp-local-to-remote: $1=staging name, $2=local file, $3=remote dir"
+}
+alias alias-help=alias_help
+
+# Eternal bash history.
+# ---------------------
+# Undocumented feature which sets the size to "unlimited".
+# http://stackoverflow.com/questions/9457233/unlimited-bash-history
+export HISTFILESIZE=
+export HISTSIZE=
+export HISTTIMEFORMAT="[%F \t %T] "
+# Change the file location because certain bash sessions truncate .bash_history file upon close.
+# http://superuser.com/questions/575479/bash-history-truncated-to-500-lines-on-each-login
+export HISTFILE=~/.bash_eternal_history
+# Force prompt to write history after every command.
+# http://superuser.com/questions/20900/bash-history-loss
+export PROMPT_COMMAND="history -a; $PROMPT_COMMAND"
+
+# Display current git branch in prompt.
+# https://ss64.com/osx/syntax-prompt.html
+parse_git_branch() {
+    git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ [\1]/'
+}
+black=$(tput setaf 0)
+red=$(tput setaf 1)
+green=$(tput setaf 2)
+yellow=$(tput setaf 3)
+blue=$(tput setaf 4)
+magenta=$(tput setaf 5)
+cyan=$(tput setaf 6)
+white=$(tput setaf 7)
+reset=$(tput sgr0)
+export PS1="[\[$magenta\]\u\[$reset\]@\[$magenta\]\h\[$reset\]:\[$cyan\]\w\[$reset\]\[$green\]\$(parse_git_branch)\[$reset\]]\\$ "
+
+# Change directories and view the contents at the same time
+function cdl { cd $1; ls;}
+
+# clear the terminal entirely
+# https://askubuntu.com/a/473770
+alias clear="clear && printf '\e[3J'"
+
+export PATH="/home/prateek:$PATH"
+
+# https://gist.github.com/sdeering/8437725
+#-------------------------------------------------------------
+# Git Alias Commands
+#-------------------------------------------------------------
+# alias g="git status"
+# alias ga="git add"
+# alias gaa="git add ."
+# alias gau="git add -u"
+# alias gc="git commit -m"
+# alias gca="git commit -am"
+# alias gb="git branch"
+# alias gbd="git branch -d"
+# alias gco="git checkout"
+# alias gcob="git checkout -b"
+# alias gt="git stash"
+# alias gta="git stash apply"
+# alias gm="git merge"
+# alias gr="git rebase"
+# alias gl="git log --oneline --decorate --graph"
+# alias glog="git log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --"
+# alias glga="git log --graph --oneline --all --decorate"
+# alias gb="git branch"
+# alias gs="git show"
+# alias gd="diff --color --color-words --abbrev"
+# alias gdc="git diff --cached"
+# alias gbl="git blame"
+# alias gps="git push"
+# alias gpl="git pull"
+# alias gb="git branch"
+# alias gc="git commit"
+# alias gd="git diff"
+# alias go="git checkout "
+# alias gk="gitk --all&"
+# alias gx="gitx --all"
+source <(kubectl completion bash)
+alias k=kubectl
+complete -o default -F __start_kubectl k
